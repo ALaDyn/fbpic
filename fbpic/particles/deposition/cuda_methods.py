@@ -125,14 +125,13 @@ def deposit_rho_gpu_linear(x, y, z, w, q,
         Represents the cumulative sum of
         the particles per cell
     """
-    # Get the 1D CUDA grid
-    i = cuda.grid(1)
-    # Deposit the field per cell in parallel (for threads < number of cells)
-    if i < prefix_sum.shape[0]:
-        # Retrieve index of upper grid point (in z and r) from prefix-sum index
+    # Get the 2D CUDA grid
+    iz_upper, ir_upper = cuda.grid(2)
+    # Deposit the field per cell in parallel
+    if (iz_upper < Nz) and (ir_upper < Nr+1):
+        # Calculate the flattened cell index
         # (See calculation of prefix-sum index in `get_cell_idx_per_particle`)
-        iz_upper = int( i / (Nr+1) )
-        ir_upper = int( i - iz_upper * (Nr+1) )
+        i = iz_upper * (Nr+1) + ir_upper
         # Calculate the inclusive offset for the current cell
         # It represents the number of particles contained in all other cells
         # with an index smaller than i + the total number of particles in the
@@ -300,14 +299,13 @@ def deposit_J_gpu_linear(x, y, z, w, q,
         Represents the cumulative sum of
         the particles per cell
     """
-    # Get the 1D CUDA grid
-    i = cuda.grid(1)
-    # Deposit the field per cell in parallel (for threads < number of cells)
-    if i < prefix_sum.shape[0]:
-        # Retrieve index of upper grid point (in z and r) from prefix-sum index
+    # Get the 2D CUDA grid
+    iz_upper, ir_upper = cuda.grid(2)
+    # Deposit the field per cell in parallel
+    if (iz_upper < Nz) and (ir_upper < Nr+1):
+        # Calculate the flattened cell index
         # (See calculation of prefix-sum index in `get_cell_idx_per_particle`)
-        iz_upper = int( i / (Nr+1) )
-        ir_upper = int( i - iz_upper * (Nr+1) )
+        i = iz_upper * (Nr+1) + ir_upper
         # Calculate the inclusive offset for the current cell
         # It represents the number of particles contained in all other cells
         # with an index smaller than i + the total number of particles in the
@@ -544,14 +542,13 @@ def deposit_rho_gpu_cubic(x, y, z, w, q,
         Represents the cumulative sum of
         the particles per cell
     """
-    # Get the 1D CUDA grid
-    i = cuda.grid(1)
-    # Deposit the field per cell in parallel (for threads < number of cells)
-    if i < prefix_sum.shape[0]:
-        # Retrieve index of upper grid point (in z and r) from prefix-sum index
+    # Get the 2D CUDA grid
+    iz_upper, ir_upper = cuda.grid(2)
+    # Deposit the field per cell in parallel
+    if (iz_upper < Nz) and (ir_upper < Nr+1):
+        # Calculate the flattened cell index
         # (See calculation of prefix-sum index in `get_cell_idx_per_particle`)
-        iz_upper = int( i / (Nr+1) )
-        ir_upper = int( i - iz_upper * (Nr+1) )
+        i = iz_upper * (Nr+1) + ir_upper
         # Calculate the inclusive offset for the current cell
         # It represents the number of particles contained in all other cells
         # with an index smaller than i + the total number of particles in the
@@ -830,14 +827,13 @@ def deposit_J_gpu_cubic(x, y, z, w, q,
         Represents the cumulative sum of
         the particles per cell
     """
-    # Get the 1D CUDA grid
-    i = cuda.grid(1)
-    # Deposit the field per cell in parallel (for threads < number of cells)
-    if i < prefix_sum.shape[0]:
-        # Retrieve index of upper grid point (in z and r) from prefix-sum index
+    # Get the 2D CUDA grid
+    iz_upper, ir_upper = cuda.grid(2)
+    # Deposit the field per cell in parallel
+    if (iz_upper < Nz) and (ir_upper < Nr+1):
+        # Calculate the flattened cell index
         # (See calculation of prefix-sum index in `get_cell_idx_per_particle`)
-        iz_upper = int( i / (Nr+1) )
-        ir_upper = int( i - iz_upper * (Nr+1) )
+        i = iz_upper * (Nr+1) + ir_upper
         # Calculate the inclusive offset for the current cell
         # It represents the number of particles contained in all other cells
         # with an index smaller than i + the total number of particles in the

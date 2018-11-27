@@ -31,7 +31,7 @@ from fbpic.utils.threading import nthreads, get_chunk_indices
 from fbpic.utils.cuda import cuda_installed
 if cuda_installed:
     # Load the CUDA methods
-    from fbpic.utils.cuda import cuda, cuda_tpb_bpg_1d
+    from fbpic.utils.cuda import cuda, cuda_tpb_bpg_1d, cuda_tpb_bpg_2d
     from .push.cuda_methods import push_p_gpu, push_p_ioniz_gpu, \
                                 push_p_after_plane_gpu, push_x_gpu
     from .deposition.cuda_methods import deposit_rho_gpu_linear, \
@@ -436,8 +436,8 @@ class Particles(object) :
 
         target_species: a `Particles` object, or a dictionary of `Particles`
             Stores the electron macroparticles that are created in
-            the ionization process. If a single `Particles` object is passed, 
-            then electrons from all ionization levels are stored into this 
+            the ionization process. If a single `Particles` object is passed,
+            then electrons from all ionization levels are stored into this
             object. If a dictionary is passed, then its keys should be integers
             (corresponding to the ionizable levels of `element`, starting
             at `level_start`), and its values should be `Particles` objects.
@@ -837,9 +837,8 @@ class Particles(object) :
         # GPU (CUDA) version
         if self.use_cuda:
             # Get the threads per block and the blocks per grid
-            dim_grid_2d_flat, dim_block_2d_flat = \
-                cuda_tpb_bpg_1d( self.prefix_sum.shape[0], TPB=64 )
-
+            dim_grid_2d, dim_block_2d = cuda_tpb_bpg_2d(
+                grid[0].Nz, grid[0].Nr+1, TPBx=8, TPBy=8 )
             # Call the CUDA Kernel for the deposition of rho or J
             Nm = len( grid )
             # Rho
@@ -847,7 +846,7 @@ class Particles(object) :
                 if self.particle_shape == 'linear':
                     if Nm == 2:
                         deposit_rho_gpu_linear[
-                            dim_grid_2d_flat, dim_block_2d_flat](
+                            dim_grid_2d, dim_block_2d](
                             self.x, self.y, self.z, weight, self.q,
                             grid[0].invdz, grid[0].zmin, grid[0].Nz,
                             grid[0].invdr, grid[0].rmin, grid[0].Nr,
@@ -856,7 +855,7 @@ class Particles(object) :
                     else:
                         for m in range(Nm):
                             deposit_rho_gpu_linear_one_mode[
-                                dim_grid_2d_flat, dim_block_2d_flat](
+                                dim_grid_2d, dim_block_2d](
                                 self.x, self.y, self.z, weight, self.q,
                                 grid[m].invdz, grid[m].zmin, grid[m].Nz,
                                 grid[m].invdr, grid[m].rmin, grid[m].Nr,
@@ -865,7 +864,7 @@ class Particles(object) :
                 elif self.particle_shape == 'cubic':
                     if Nm == 2:
                         deposit_rho_gpu_cubic[
-                            dim_grid_2d_flat, dim_block_2d_flat](
+                            dim_grid_2d, dim_block_2d](
                             self.x, self.y, self.z, weight, self.q,
                             grid[0].invdz, grid[0].zmin, grid[0].Nz,
                             grid[0].invdr, grid[0].rmin, grid[0].Nr,
@@ -874,7 +873,7 @@ class Particles(object) :
                     else:
                         for m in range(Nm):
                             deposit_rho_gpu_cubic_one_mode[
-                                dim_grid_2d_flat, dim_block_2d_flat](
+                                dim_grid_2d, dim_block_2d](
                                 self.x, self.y, self.z, weight, self.q,
                                 grid[m].invdz, grid[m].zmin, grid[m].Nz,
                                 grid[m].invdr, grid[m].rmin, grid[m].Nr,
@@ -886,7 +885,7 @@ class Particles(object) :
                 if self.particle_shape == 'linear':
                     if Nm == 2:
                         deposit_J_gpu_linear[
-                            dim_grid_2d_flat, dim_block_2d_flat](
+                            dim_grid_2d, dim_block_2d](
                             self.x, self.y, self.z, weight, self.q,
                             self.ux, self.uy, self.uz, self.inv_gamma,
                             grid[0].invdz, grid[0].zmin, grid[0].Nz,
@@ -898,7 +897,7 @@ class Particles(object) :
                     else:
                         for m in range(Nm):
                             deposit_J_gpu_linear_one_mode[
-                                dim_grid_2d_flat, dim_block_2d_flat](
+                                dim_grid_2d, dim_block_2d](
                                 self.x, self.y, self.z, weight, self.q,
                                 self.ux, self.uy, self.uz, self.inv_gamma,
                                 grid[m].invdz, grid[m].zmin, grid[m].Nz,
@@ -908,7 +907,7 @@ class Particles(object) :
                 elif self.particle_shape == 'cubic':
                     if Nm == 2:
                         deposit_J_gpu_cubic[
-                            dim_grid_2d_flat, dim_block_2d_flat](
+                            dim_grid_2d, dim_block_2d](
                             self.x, self.y, self.z, weight, self.q,
                             self.ux, self.uy, self.uz, self.inv_gamma,
                             grid[0].invdz, grid[0].zmin, grid[0].Nz,
@@ -920,7 +919,7 @@ class Particles(object) :
                     else:
                         for m in range(Nm):
                             deposit_J_gpu_cubic_one_mode[
-                                dim_grid_2d_flat, dim_block_2d_flat](
+                                dim_grid_2d, dim_block_2d](
                                 self.x, self.y, self.z, weight, self.q,
                                 self.ux, self.uy, self.uz, self.inv_gamma,
                                 grid[m].invdz, grid[m].zmin, grid[m].Nz,
